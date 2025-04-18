@@ -10,7 +10,6 @@ Demo: [https://scribbly-lac.vercel.app/](https://scribbly-lac.vercel.app/)
 
 - ✅ Create, edit, and delete notes
 - ✨ Markdown support (with preview rendering)
-- 🌗 Dark mode toggle (with saved preference)
 - 🔖 Tagging + tag-based filtering
 - 🎉 Confetti when saving a note (yes, seriously)
 - 📤 Export notes as JSON
