@@ -1,103 +1,308 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import NoteForm from './components/noteform';
+import NoteCard from './components/notecard';
+import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { X } from 'lucide-react';
+import { Download, Upload, Pen, Maximize2, NotebookPen, SquarePen} from 'lucide-react';
+
+type Note = {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  tags: string[];
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    const savedNotes = localStorage.getItem('notes');
+    if (savedNotes) setNotes(JSON.parse(savedNotes));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('notes', JSON.stringify(notes));
+  }, [notes]);
+
+  const addNote = (note: Note) => {
+    setNotes([note, ...notes]);
+  };
+
+  const deleteNote = (id: string) => {
+    setNotes(notes.filter((note) => note.id !== id));
+  };
+
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedContent, setEditedContent] = useState('');
+  const [editedTags, setEditedTags] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showFormPanel, setShowFormPanel] = useState(false);
+
+  useEffect(() => {
+    if (selectedNote) {
+      setEditedTitle(selectedNote.title);
+      setEditedContent(selectedNote.content);
+      setEditedTags(selectedNote.tags?.join(', ') || '');
+      setIsEditing(false); // reset when new note is selected
+    }
+  }, [selectedNote]);
+
+  useEffect(() => {
+    const theme = localStorage.getItem('theme');
+    if (theme === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+  
+
+  const handleSaveEdit = () => {
+    if (!selectedNote) return;
+
+    const updatedNote = {
+      ...selectedNote,
+      title: editedTitle.trim(),
+      content: editedContent.trim(),
+      tags: editedTags.split(',').map((tag) => tag.trim()).filter(Boolean),
+    };
+
+    const updatedNotes = notes.map((note) => 
+      note.id === updatedNote.id ? updatedNote : note
+    );
+
+    setNotes(updatedNotes);
+    localStorage.setItem('notes', JSON.stringify(updatedNotes));
+    setSelectedNote(updatedNote);
+    setIsEditing(false);
+
+  }
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    localStorage.setItem('theme', newMode ? 'dark' : 'light');
+  
+    // Apply the class to <html>
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+  
+  const handleImportNotes = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedNotes = JSON.parse(event.target?.result as string);
+
+        if (Array.isArray(importedNotes)) {
+          const validNotes = importedNotes.filter(
+            (n) => n.id && n.title && n.content && n.createdAt && n.tags
+          );
+          setNotes([...notes, ...validNotes]);
+        } else {
+          alert('Invalid file format');
+        }
+      } catch (err) {
+        alert('Error reading file');
+      }
+    };
+    reader.readAsText(file);
+ }  
+  const filteredNotes = selectedTag
+    ? notes.filter((note) => note.tags.includes(selectedTag))
+    : notes;
+
+  return (
+    <main className="min-h-screen p-4 bg-gray-200 transition-colors">
+      <nav className="flex bg-white m-auto rounded-3xl py-2 px-4 items-center w-full md:w-[350px] justify-between items-center mb-4 relative">
+      <h1 className="text-3xl font-bold text-center text-indigo-600">Scribbly</h1>
+      <div>
+      <button
+        onClick={toggleDarkMode}
+        className="toggle-dark text-sm text-gray-600 dark:text-gray-300 top-4 right-4"
+      >
+        {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+      </button>
+      <button
+        onClick={() => {
+          const blob = new Blob([JSON.stringify(notes, null, 2)], {
+            type: 'application/json',
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'scribbly-notes.json';
+          a.click();
+          URL.revokeObjectURL(url);
+        }}
+        className="download p-2 rounded-3xl text-sm"
+      >
+        < Download size={22} />
+      </button>
+      <label htmlFor="import-notes" className="upload rounded-3xl mx-2 cursor-pointer inline-flex items-center p-2">
+        <Upload size={22} className="" />
+      </label>
+      <input
+        type="file"
+        accept=".json"
+        id="import-notes"
+        onChange={handleImportNotes}
+        className="hidden"
+      />
+      <button
+        onClick={() => setShowFormPanel(true)}
+        className="create-note-btn rounded-3xl cursor-pointer inline-flex items-center p-2"
+      >
+        < NotebookPen size={22} />
+      </button></div>
+      
+      </nav>
+      <AnimatePresence>
+      {showFormPanel && (
+        <motion.div
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ type: 'spring', stiffness: 100, damping: 10 }}
+          className="fixed panel-wrapper create-note inset-0 bg-opacity-50 flex items-center justify-center z-50"
+        >
+          <div className="panel bg-white rounded-3xl max-w-xl w-full p-6 absolute">
+            <button
+              onClick={() => setShowFormPanel(false)}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Create a Note</h2>
+            <NoteForm addNote={(note) => {
+              addNote(note);
+              setShowFormPanel(false); // close panel after saving
+            }} />
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+      {selectedTag && (
+        <div className="mb-4 text-center">
+          <span className="text-sm">
+            Filtering by <strong>#{selectedTag}</strong>
+          </span>
+          <button
+            onClick={() => setSelectedTag(null)}
+            className="ml-2 text-blue-600 underline text-sm"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Clear filter
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      )}
+      <div className="max-w-7xl mx-auto w-full px-0">
+      <div className="grid md:grid-cols-3 gap-4 mt-6">
+        {filteredNotes.map((note) => (
+          <NoteCard key={note.id} note={note} deleteNote={deleteNote} onTagClick={(tag: string) => setSelectedTag(tag)} onClick={() => setSelectedNote(note)} />
+        ))}
+      </div>
+      </div>
+      <AnimatePresence>
+      {selectedNote && (
+        <motion.div initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', stiffness: 100, damping: 10 }} className="panel-wrapper fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="panel bg-white rounded-3xl max-w-xl w-full p-6 absolute">
+            <div className="relative">
+            <button
+              onClick={() => setSelectedNote(null)}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={20} />
+            </button>
+
+            {isEditing ? (
+              <>
+              <div className="edit-note">
+                <input
+                  className="w-full mb-2 border rounded px-3 py-2"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                />
+                <textarea
+                  className="w-full mb-2 border rounded px-3 py-2"
+                  rows={6}
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                />
+                <input
+                  className="w-full mb-2 border rounded px-3 py-2"
+                  value={editedTags}
+                  onChange={(e) => setEditedTags(e.target.value)}
+                />
+                <div className="flex justify-end gap-2 mt-4">
+                  <button onClick={() => setIsEditing(false)} className="text-sm text-gray-500 hover:underline">
+                    Cancel
+                  </button>
+                  <button onClick={handleSaveEdit} className="basic-btn">
+                    Save
+                  </button>
+                </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold mb-2">{selectedNote.title}</h2>
+                <div className="edit-preview p-3 rounded-lg prose prose-sm text-gray-700">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedNote.content}</ReactMarkdown>
+                </div>
+
+                {selectedNote.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-4">
+                    {selectedNote.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="tag text-blue-700 text-xs py-1 rounded-full"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-400 mt-4">
+                  {new Date(selectedNote.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="edit-note-btn mt-4 flex items-center text-sm"
+                >
+                   <SquarePen size={16} className="mr-2" /> Edit Note
+                </button>
+              </>
+            )}      
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </main>
   );
 }
