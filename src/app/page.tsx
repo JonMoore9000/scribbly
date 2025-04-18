@@ -139,32 +139,56 @@ export default function Home() {
       >
         {isDarkMode ? '☀️ Light' : '🌙 Dark'}
       </button>
-      <button
-        onClick={() => {
-          const blob = new Blob([JSON.stringify(notes, null, 2)], {
-            type: 'application/json',
-          });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'scribbly-notes.json';
-          a.click();
-          URL.revokeObjectURL(url);
-        }}
-        className="download p-2 rounded-3xl text-sm"
-      >
-        < Download size={22} />
-      </button>
-      <label htmlFor="import-notes" className="upload rounded-3xl mx-2 cursor-pointer inline-flex items-center p-2">
-        <Upload size={22} className="" />
-      </label>
-      <input
-        type="file"
-        accept=".json"
-        id="import-notes"
-        onChange={handleImportNotes}
-        className="hidden"
-      />
+      <div className="relative group inline-block">
+        <button
+          onClick={() => {
+            const blob = new Blob([JSON.stringify(notes, null, 2)], {
+              type: 'application/json',
+            });
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0]; // e.g., "2025-04-18"
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `scribbly-notes-${formattedDate}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="download p-2 rounded-3xl text-sm hover:bg-primary/10 transition"
+        >
+          <Download size={22} />
+        </button>
+
+        {/* Tooltip */}
+        <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 
+                        opacity-0 group-hover:opacity-100 transition bg-white text-black text-xs 
+                        px-2 py-1 rounded pointer-events-none z-10 whitespace-nowrap">
+          Export Notes
+        </span>
+      </div>
+      <div className="relative group inline-block">
+        <label
+          htmlFor="import-notes"
+          className="upload rounded-3xl mx-2 cursor-pointer inline-flex items-center p-2 hover:bg-primary/10 transition"
+        >
+          <Upload size={22} />
+        </label>
+
+        {/* Tooltip */}
+        <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 
+                        opacity-0 group-hover:opacity-100 transition bg-white text-black text-xs 
+                        px-2 py-1 rounded pointer-events-none z-10 whitespace-nowrap">
+          Import Notes
+        </span>
+
+        <input
+          type="file"
+          accept=".json"
+          id="import-notes"
+          onChange={handleImportNotes}
+          className="hidden"
+        />
+      </div>
       <button
         onClick={() => setShowFormPanel(true)}
         className="create-note-btn rounded-3xl cursor-pointer inline-flex items-center p-2"
@@ -209,6 +233,12 @@ export default function Home() {
           >
             Clear filter
           </button>
+        </div>
+      )}
+      {notes.length === 0 && (
+        <div className="text-center text-gray-500 dark:text-gray-400 mt-12">
+          <p className="text-lg">📝 Start your first note!</p>
+          <p className="text-sm inline-flex items-center">Click the <NotebookPen className="mx-2" size={20} /> button to begin writing.</p>
         </div>
       )}
       <div className="max-w-7xl mx-auto w-full px-0">
