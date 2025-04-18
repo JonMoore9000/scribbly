@@ -2,6 +2,8 @@
 
 Scribbly is a playful, markdown-powered note-taking app built with **Next.js**, **Tailwind CSS**, and lots of ✨ good vibes. It’s fast, responsive, and built for humans who love ideas (and confetti 🎉).
 
+Demo: [https://scribbly-lac.vercel.app/](https://scribbly-lac.vercel.app/)
+
 ---
 
 ## 🚀 Features
