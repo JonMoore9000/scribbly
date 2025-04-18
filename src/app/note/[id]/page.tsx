@@ -1,4 +1,4 @@
-// DO NOT put 'use client' at the top — this needs to be a Server Component
+// app/note/[id]/page.tsx
 import { getNoteById } from '../../../lib/firestore';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
