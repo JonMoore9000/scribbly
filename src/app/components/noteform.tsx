@@ -3,15 +3,51 @@
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Save } from 'lucide-react';
+import { useEffect } from 'react';
 import confetti from 'canvas-confetti';
+import { useAuth } from '../../context/AuthContext';
+import { saveNote } from '../../lib/firestore';
+import { ScribblyNote } from '../../lib/firestore';
 
-export default function NoteForm({ addNote }: { addNote: (note: any) => void }) {
+export default function NoteForm(
+  {
+    onClose,
+    onSave,
+  }: {
+    onClose: () => void;
+    onSave?: (note: ScribblyNote) => void;
+  }
+) {
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tagsInput, setTagsInput] = useState('');
   const [showWarning, setShowWarning] = useState(false);
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('scribbly-draft');
+    if (savedDraft) {
+      const { title, content, tagsInput } = JSON.parse(savedDraft);
+      setTitle(title || '');
+      setContent(content || '');
+      setTagsInput(tagsInput || '');
+    }
+  }, []);
+  
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      localStorage.setItem(
+        'scribbly-draft',
+        JSON.stringify({ title, content, tagsInput })
+      );
+    }, 300); // debounce to avoid saving on every keypress
+  
+    return () => clearTimeout(timeout);
+  }, [title, content, tagsInput]);
+  
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const trimmedTitle = title.trim();
@@ -27,14 +63,21 @@ export default function NoteForm({ addNote }: { addNote: (note: any) => void }) 
 
 
 
-    addNote({ 
-        id: uuidv4(), 
-        title, 
-        content , 
-        createdAt: new Date().toISOString(),
-        tags: tagsInput.split(',').map((tag) => tag.trim()).filter((tag) => tag !== '')
-  });
+    if (!user) return; // or throw an error
 
+    const newNote = await saveNote(
+      {
+        title,
+        content,
+        tags: tagsInput
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter((tag) => tag !== ''),
+      },
+      user.uid
+    );
+    onSave?.(newNote);
+    
   confetti({
     particleCount: 100,
     spread: 70,
@@ -46,7 +89,7 @@ export default function NoteForm({ addNote }: { addNote: (note: any) => void }) 
     setTagsInput('');
     setShowWarning(false);
 
-    
+    onClose();
 }
 
   return (

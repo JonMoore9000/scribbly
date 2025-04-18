@@ -7,7 +7,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { X } from 'lucide-react';
+import { auth } from "./../lib/firebase";
+import { useAuth } from '../context/AuthContext';
+import AuthForm from '../app/components/AuthForm';
+import { getNotesByUser } from '../lib/firestore';
 import { Download, Upload, Pen, Maximize2, NotebookPen, SquarePen} from 'lucide-react';
+import { updateNote } from '../lib/firestore';
+import { deleteNote as deleteNoteFromDB } from '../lib/firestore';
 
 type Note = {
   id: string;
@@ -20,11 +26,16 @@ type Note = {
 export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const savedNotes = localStorage.getItem('notes');
-    if (savedNotes) setNotes(JSON.parse(savedNotes));
-  }, []);
+    if (user) {
+      getNotesByUser(user.uid).then((fetchedNotes) => {
+        setNotes(fetchedNotes);
+      });
+    }
+  }, [user]);
+  
 
   useEffect(() => {
     localStorage.setItem('notes', JSON.stringify(notes));
@@ -34,8 +45,14 @@ export default function Home() {
     setNotes([note, ...notes]);
   };
 
-  const deleteNote = (id: string) => {
-    setNotes(notes.filter((note) => note.id !== id));
+  const deleteNote = async (id: string) => {
+    try {
+      await deleteNoteFromDB(id);
+      setNotes(notes.filter((note) => note.id !== id));
+    } catch (err) {
+      console.error('Failed to delete note:', err);
+      alert('Something went wrong while deleting the note.');
+    }
   };
 
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -67,26 +84,30 @@ export default function Home() {
   }, []);
   
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!selectedNote) return;
-
+  
     const updatedNote = {
       ...selectedNote,
       title: editedTitle.trim(),
       content: editedContent.trim(),
       tags: editedTags.split(',').map((tag) => tag.trim()).filter(Boolean),
     };
-
-    const updatedNotes = notes.map((note) => 
-      note.id === updatedNote.id ? updatedNote : note
-    );
-
-    setNotes(updatedNotes);
-    localStorage.setItem('notes', JSON.stringify(updatedNotes));
-    setSelectedNote(updatedNote);
-    setIsEditing(false);
-
-  }
+  
+    try {
+      await updateNote(updatedNote);
+      const updatedNotes = notes.map((note) =>
+        note.id === updatedNote.id ? updatedNote : note
+      );
+      setNotes(updatedNotes);
+      setSelectedNote(updatedNote);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating note:', error);
+      alert('Something went wrong while saving the note.');
+    }
+  };
+  
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
@@ -128,8 +149,19 @@ export default function Home() {
     ? notes.filter((note) => note.tags.includes(selectedTag))
     : notes;
 
+    if (!user) {
+      return <AuthForm />;
+    }
+
   return (
     <main className="min-h-screen p-4 bg-gray-200 transition-colors">
+      
+      <button
+        onClick={() => auth.signOut()}
+        className="logout-btn basic-btn"
+      >
+        Log out
+      </button>
       <nav className="flex bg-white m-auto rounded-3xl py-2 px-4 items-center w-full md:w-[350px] justify-between items-center mb-4 relative">
       <h1 className="text-3xl font-bold text-center text-indigo-600">Scribbly</h1>
       <div>
@@ -214,10 +246,13 @@ export default function Home() {
               <X size={20} />
             </button>
             <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Create a Note</h2>
-            <NoteForm addNote={(note) => {
-              addNote(note);
-              setShowFormPanel(false); // close panel after saving
-            }} />
+            <NoteForm
+            onClose={() => setShowFormPanel(false)}
+            onSave={(note) => {
+              setNotes((prev) => [note, ...prev]);
+              setShowFormPanel(false);
+            }}
+          />
           </div>
         </motion.div>
       )}
@@ -325,6 +360,14 @@ export default function Home() {
                   className="edit-note-btn mt-4 flex items-center text-sm"
                 >
                    <SquarePen size={16} className="mr-2" /> Edit Note
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/note/${selectedNote?.id}`);
+                  }}
+                  className="mt-2 text-sm text-blue-600 hover:underline"
+                >
+                  🔗 Copy Share Link
                 </button>
               </>
             )}      
