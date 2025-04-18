@@ -361,14 +361,6 @@ export default function Home() {
                 >
                    <SquarePen size={16} className="mr-2" /> Edit Note
                 </button>
-                <button
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/note/${selectedNote?.id}`);
-                }}
-                className="basic-btn mt-2"
-              >
-                <Link2 size={16} className="mr-2" /> Copy Share Link
-              </button>
               </>
             )}      
             </div>

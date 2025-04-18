@@ -1,4 +1,5 @@
 // app/note/[id]/page.tsx - issues here
+/*
 import { getNoteById } from '../../../lib/firestore';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -36,4 +37,4 @@ export default async function NotePage({ params }: { params: { id: string } }) {
       </p>
     </div>
   );
-}
+}*/
