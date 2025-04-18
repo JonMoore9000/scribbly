@@ -11,7 +11,7 @@ import { auth } from "./../lib/firebase";
 import { useAuth } from '../context/AuthContext';
 import AuthForm from '../app/components/AuthForm';
 import { getNotesByUser } from '../lib/firestore';
-import { Download, Upload, Pen, Maximize2, NotebookPen, SquarePen} from 'lucide-react';
+import { Download, Upload, Pen, Maximize2, NotebookPen, SquarePen, Link2} from 'lucide-react';
 import { updateNote } from '../lib/firestore';
 import { deleteNote as deleteNoteFromDB } from '../lib/firestore';
 
@@ -357,18 +357,18 @@ export default function Home() {
 
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="edit-note-btn mt-4 flex items-center text-sm"
+                  className="basic-btn mt-2"
                 >
                    <SquarePen size={16} className="mr-2" /> Edit Note
                 </button>
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/note/${selectedNote?.id}`);
-                  }}
-                  className="mt-2 text-sm text-blue-600 hover:underline"
-                >
-                  🔗 Copy Share Link
-                </button>
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/note/${selectedNote?.id}`);
+                }}
+                className="basic-btn mt-2"
+              >
+                <Link2 size={16} className="mr-2" /> Copy Share Link
+              </button>
               </>
             )}      
             </div>

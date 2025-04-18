@@ -11,6 +11,7 @@ import {
   deleteDoc,
   updateDoc,
   doc,
+  getDoc,
 } from 'firebase/firestore';
 
 // For saving a note
@@ -70,4 +71,15 @@ export type ScribblyNote = NewNote & {
       content: note.content,
       tags: note.tags,
     });
+  };
+
+  export const getNoteById = async (id: string) => {
+    const docRef = doc(db, 'notes', id);
+    const docSnap = await getDoc(docRef);
+  
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as any;
+    } else {
+      return null;
+    }
   };

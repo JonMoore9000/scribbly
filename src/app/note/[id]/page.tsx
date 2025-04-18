@@ -1,30 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { notFound } from 'next/navigation';
+import { use } from 'react';
+import { getNoteById } from '../../../lib/firestore';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { use } from 'react';
+import { notFound } from 'next/navigation';
 
-type Note = {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  tags: string[];
-};
+export default function NotePage(promise: Promise<{ params: { id: string } }>) {
+  const { params } = use(promise);
+  const { id } = params;
 
-export default function NotePage({ params }: { params: { id: string } }) {
-  const [note, setNote] = useState<Note | null>(null);
-
-  useEffect(() => {
-    const storedNotes = localStorage.getItem('notes');
-    if (storedNotes) {
-      const notes: Note[] = JSON.parse(storedNotes);
-      const found = notes.find((n) => n.id === params.id);
-      if (found) setNote(found);
-    }
-  }, [params.id]);
+  const notePromise = getNoteById(id);
+  const note = use(notePromise);
 
   if (!note) return notFound();
 
@@ -38,7 +25,7 @@ export default function NotePage({ params }: { params: { id: string } }) {
       </div>
       {note.tags?.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
-          {note.tags.map((tag, i) => (
+          {note.tags.map((tag: string, i: number) => (
             <span key={i} className="bg-gray-200 dark:bg-gray-700 text-xs px-2 py-1 rounded-full">
               #{tag}
             </span>
@@ -47,7 +34,7 @@ export default function NotePage({ params }: { params: { id: string } }) {
       )}
       <p className="text-sm text-gray-400">
         Created on{' '}
-        {new Date(note.createdAt).toLocaleDateString('en-US', {
+        {new Date(note.createdAt.toDate?.() ?? note.createdAt).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric',
