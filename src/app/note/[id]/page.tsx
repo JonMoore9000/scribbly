@@ -1,17 +1,11 @@
-'use client';
-
-import { use } from 'react';
+// DO NOT put 'use client' at the top — this needs to be a Server Component
 import { getNoteById } from '../../../lib/firestore';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { notFound } from 'next/navigation';
 
-export default function NotePage(promise: Promise<{ params: { id: string } }>) {
-  const { params } = use(promise);
-  const { id } = params;
-
-  const notePromise = getNoteById(id);
-  const note = use(notePromise);
+export default async function NotePage({ params }: { params: { id: string } }) {
+  const note = await getNoteById(params.id);
 
   if (!note) return notFound();
 
