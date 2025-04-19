@@ -5,17 +5,17 @@ import remarkGfm from 'remark-gfm';
 import { Metadata } from 'next';
 import Link from 'next/link';
 
-interface PageProps {
-  params: Promise<{
-    id: string;
-  }>;
+type Props = {
+  params: Promise<{ id: string }>;
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  // Await the params object
+export async function generateMetadata(
+  props: Props
+): Promise<Metadata> {
+  const { params } = props;
   const { id } = await params;
-  
+
   try {
     const note = await getNoteById(id);
     
@@ -47,10 +47,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function NotePage({ params }: PageProps) {
-  // Await the params object
+export default async function NotePage(props: Props) {
+  const { params } = props;
   const { id } = await params;
-  
+
   try {
     const note = await getNoteById(id);
 
@@ -83,7 +83,7 @@ export default async function NotePage({ params }: PageProps) {
             </h1>
             <time 
               dateTime={note.createdAt.toString()}
-              className="text-sm text-white rounded py-1 px-2"
+              className="text-sm text-gray-600"
             >
               {formattedDate}
             </time>
