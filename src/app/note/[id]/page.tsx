@@ -3,18 +3,22 @@ import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Metadata } from 'next';
-import { PageProps } from 'next/types';
 
-type Props = {
-  params: Promise<{ id: string }>;
-  searchParams: { [key: string]: string | string[] | undefined };
+type PageProps = {
+  params: {
+    id: string;
+  };
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const note = await getNoteById(id);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const note = await getNoteById(params.id);
   
-  if (!note || !note.public) return {};
+  if (!note || !note.public) {
+    return {
+      title: 'Note not found',
+      description: 'This note does not exist or is private'
+    };
+  }
   
   return {
     title: note.title,
@@ -22,9 +26,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function NotePage({ params }: Props) {
-  const { id } = await params;
-  const note = await getNoteById(id);
+export default async function NotePage({ params }: PageProps) {
+  const note = await getNoteById(params.id);
 
   if (!note || !note.public) {
     return notFound();
