@@ -3,16 +3,15 @@ import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Metadata } from 'next';
+import { PageProps } from 'next/types';
 
-interface Props {
-  params: {
-    id: string;
-  };
-}
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  // Resolve the id parameter first
-  const { id } = await props.params;
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
   const note = await getNoteById(id);
   
   if (!note || !note.public) return {};
@@ -23,9 +22,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   };
 }
 
-export default async function NotePage(props: Props) {
-  // Resolve the id parameter first
-  const { id } = await props.params;
+export default async function NotePage({ params }: Props) {
+  const { id } = await params;
   const note = await getNoteById(id);
 
   if (!note || !note.public) {
