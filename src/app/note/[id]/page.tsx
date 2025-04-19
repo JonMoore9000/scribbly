@@ -4,29 +4,19 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Metadata } from 'next';
 
-interface Props {
-  params: {
-    id: string;
-  };
-}
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const note = await getNoteById(params.id);
 
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  // Resolve the id parameter first
-  const { id } = await props.params;
-  const note = await getNoteById(id);
-  
   if (!note || !note.public) return {};
-  
+
   return {
     title: note.title,
     description: note.content.slice(0, 150),
   };
 }
 
-export default async function NotePage(props: Props) {
-  // Resolve the id parameter first
-  const { id } = await props.params;
-  const note = await getNoteById(id);
+export default async function NotePage({ params }: { params: { id: string } }) {
+  const note = await getNoteById(params.id);
 
   if (!note || !note.public) {
     return notFound();
