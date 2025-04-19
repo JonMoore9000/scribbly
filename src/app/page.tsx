@@ -20,13 +20,16 @@ type Note = {
   title: string;
   content: string;
   createdAt: string;
+  emoji: string;
   tags: string[];
+  public: boolean;
 };
 
 export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const { user } = useAuth();
+  const [editedEmoji, setEditedEmoji] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -69,6 +72,7 @@ export default function Home() {
       setEditedContent(selectedNote.content);
       setEditedTags(selectedNote.tags?.join(', ') || '');
       setIsEditing(false); // reset when new note is selected
+      setEditedEmoji(selectedNote.emoji || '📝');
     }
   }, [selectedNote]);
 
@@ -92,6 +96,7 @@ export default function Home() {
       title: editedTitle.trim(),
       content: editedContent.trim(),
       tags: editedTags.split(',').map((tag) => tag.trim()).filter(Boolean),
+      emoji: editedEmoji,
     };
   
     try {
@@ -301,6 +306,24 @@ export default function Home() {
             {isEditing ? (
               <>
               <div className="edit-note">
+              <select
+                value={editedEmoji}
+                onChange={(e) => setEditedEmoji(e.target.value)}
+                className="edit-emoji w-16 p-1 text-xl text-center rounded border"
+              >
+                {[
+                  '📝', '✏️', '🖊️', '🖋️', '📓', '📔', '📒', '📕', '📖', '📚',
+                  '💡', '🧠', '🤔', '🧐', '🔍', '🧪', '🔬', '📈', '📊',
+                  '✅', '📌', '📋', '🗒️', '🗂️', '📎', '📅', '📆', '📤',
+                  '🔥', '⚡', '🌟', '🏆', '🚀', '💪', '🎯', '🏃', '🥇',
+                  '🌿', '🌊', '🧘', '☀️', '🌅', '🫶', '🌸', '💤',
+                  '🤖', '💻', '📱', '🛠️', '🧬', '🔧', '⚙️',
+                  '🎨', '🎉', '✨', '🦄', '🎈', '🎵', '🎲', '🥳', '😎',
+                  '🐱', '🐶', '🐢', '🐙', '🦋', '🐝', '🌵', '🌲', '🌻'
+                ].map((em, idx) => (
+                  <option key={idx} value={em}>{em}</option>
+                ))}
+              </select>
                 <input
                   className="w-full mb-2 border rounded px-3 py-2"
                   value={editedTitle}
@@ -329,7 +352,7 @@ export default function Home() {
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-bold mb-2">{selectedNote.title}</h2>
+                <h2 className="text-2xl font-bold mb-2"><span className="mr-2">{selectedNote.emoji}</span>{selectedNote.title}</h2>
                 <div className="edit-preview p-3 rounded-lg prose prose-sm text-gray-700">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedNote.content}</ReactMarkdown>
                 </div>
@@ -361,6 +384,18 @@ export default function Home() {
                 >
                    <SquarePen size={16} className="mr-2" /> Edit Note
                 </button>
+                {selectedNote.public && (
+                  <button
+                    onClick={() => {
+                      const link = `${window.location.origin}/note/${selectedNote.id}`;
+                      navigator.clipboard.writeText(link);
+                      alert('🔗 Link copied to clipboard!');
+                    }}
+                    className="mt-2 text-sm text-blue-600 hover:underline"
+                  >
+                    🔗 Copy Share Link
+                  </button>
+                )}
               </>
             )}      
             </div>

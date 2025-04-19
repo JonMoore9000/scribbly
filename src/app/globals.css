@@ -191,6 +191,15 @@ time {
   bottom: 10px;
 }
 
+.edit-emoji, .new-emoji {
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.edit-emoji:hover, .new-emoji:hover {
+  cursor: pointer;
+}
+
 @media(max-width: 641px) {
   .panel {
     right: 0;

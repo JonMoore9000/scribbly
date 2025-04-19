@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm';
 export default function NoteCard({ note, deleteNote, onTagClick, onClick }: { note: any; deleteNote: (id: string) => void; onTagClick: (tag: string) => void; onClick?: () => void }) {
   return (
     <div className="notecard bg-white p-4 rounded-3xl">
-      <h2 className="text-xl font-semibold mb-0">{note.title}</h2>
+      <h2 className="text-xl font-semibold mb-0"><span className="mr-1">{note.emoji}</span>{note.title}</h2>
       <time className="text-xs text-white flex items-center my-1 px-2 py-1 rounded-lg w-fit">
         < Calendar size={14} className="mr-1"/>
         {(() => {

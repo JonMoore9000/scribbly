@@ -23,7 +23,20 @@ export default function NoteForm(
   const [content, setContent] = useState('');
   const [tagsInput, setTagsInput] = useState('');
   const [showWarning, setShowWarning] = useState(false);
+  const [emoji, setEmoji] = useState('');
   const { user } = useAuth();
+  const [isPublic, setIsPublic] = useState(false);
+
+  const emojiOptions = [
+    '📝', '✏️', '🖊️', '🖋️', '📓', '📔', '📒', '📕', '📖', '📚',
+    '💡', '🧠', '🤔', '🧐', '🔍', '🧪', '🔬', '📈', '📊',
+    '✅', '📌', '📋', '🗒️', '🗂️', '📎', '📅', '📆', '📤',
+    '🔥', '⚡', '🌟', '🏆', '🚀', '💪', '🎯', '🏃', '🥇',
+    '🌿', '🌊', '🧘', '☀️', '🌅', '🫶', '🌸', '💤',
+    '🤖', '💻', '📱', '🛠️', '🧬', '🔧', '⚙️',
+    '🎨', '🎉', '✨', '🦄', '🎈', '🎵', '🎲', '🥳', '😎',
+    '🐱', '🐶', '🐢', '🐙', '🦋', '🐝', '🌵', '🌲', '🌻'
+  ];
 
   useEffect(() => {
     const savedDraft = localStorage.getItem('scribbly-draft');
@@ -69,10 +82,12 @@ export default function NoteForm(
       {
         title,
         content,
+        emoji,
         tags: tagsInput
           .split(',')
           .map((tag) => tag.trim())
           .filter((tag) => tag !== ''),
+          public: isPublic
       },
       user.uid
     );
@@ -88,12 +103,22 @@ export default function NoteForm(
     setContent('');
     setTagsInput('');
     setShowWarning(false);
-
     onClose();
 }
 
   return (
     <form onSubmit={handleSubmit} className="rounded-4xl">
+      <select
+        value={emoji}
+        onChange={(e) => setEmoji(e.target.value)}
+        className="new-emoji mb-2 w-20 p-2 rounded-lg border text-2xl text-center"
+      >
+        {emojiOptions.map((em, idx) => (
+          <option key={idx} value={em}>
+            {em}
+          </option>
+        ))}
+      </select>
       <input
         type="text"
         placeholder="Title"
@@ -120,6 +145,14 @@ export default function NoteForm(
         value={tagsInput}
         onChange={(e) => setTagsInput(e.target.value)}
       />
+      <label className="flex items-center gap-2 mb-2 text-sm">
+        <input
+          type="checkbox"
+          checked={isPublic}
+          onChange={(e) => setIsPublic(e.target.checked)}
+        />
+        Make this note public
+      </label>
       {showWarning && (
         <p className="text-red-500">Please fill in both title and content.</p>
       )}

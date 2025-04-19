@@ -19,12 +19,15 @@ export type NewNote = {
     title: string;
     content: string;
     tags: string[];
+    emoji: string;
     createdAt?: string;
+    public: boolean;
   };
 
 // For displaying a note (after saved)
 export type ScribblyNote = NewNote & {
     id: string;
+    emoji: string;
     createdAt: string; // ✅ now required
   };
 
@@ -33,6 +36,7 @@ export type ScribblyNote = NewNote & {
       ...note,
       userId,
       createdAt: Timestamp.now(),
+      public: note.public,
     });
   
     return {
@@ -53,7 +57,9 @@ export type ScribblyNote = NewNote & {
         id: doc.id,
         title: data.title,
         content: data.content,
+        emoji: data.emoji,
         tags: data.tags || [],
+        public: data.public,
         createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
       };
     });
@@ -69,7 +75,9 @@ export type ScribblyNote = NewNote & {
     await updateDoc(noteRef, {
       title: note.title,
       content: note.content,
+      emoji: note.emoji,
       tags: note.tags,
+      public: note.public,
     });
   };
 
